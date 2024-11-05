@@ -4,11 +4,13 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -28,7 +30,6 @@ class MainActivity : AppCompatActivity() {
 
     // Define the ActivityResultLauncher for opening the file picker
     private val filePickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        Log.i("TAG", result.toString())
         if (result.resultCode == RESULT_OK) {
             val uri: Uri? = result.data?.data
             if (uri != null) {
@@ -51,10 +52,29 @@ class MainActivity : AppCompatActivity() {
 
         // Set up the import button click listener to check for permission and open the file picker
         importButton.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1)
-            } else {
-                openFilePicker()
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                // Android 12 and below
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1)
+                } else {
+                    openFilePicker()
+                }
+            }
+            else {
+                // Android 13 and above
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.READ_MEDIA_IMAGES
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+                        1
+                    )
+                } else {
+                    openFilePicker()
+                }
             }
         }
     }
@@ -62,7 +82,7 @@ class MainActivity : AppCompatActivity() {
     // Function to open the file picker
     private fun openFilePicker() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "*/*" // Filter to only show JSON files
+        intent.type = "*/*" // Filter to all files
         filePickerLauncher.launch(Intent.createChooser(intent, "Select JSON File"))
 
     }
@@ -70,6 +90,15 @@ class MainActivity : AppCompatActivity() {
     // Read JSON data from the selected file URI
     private fun readJsonFromUri(uri: Uri) {
         try {
+            val fileExtension = getFileExtension(uri)
+            Log.i("TAG", fileExtension.toString())
+
+            // Check if the file has a .json extension
+            if (fileExtension != "json") {
+                Toast.makeText(this, "Sorry, we don't support this file type.", Toast.LENGTH_SHORT).show()
+                return
+            }
+
             val inputStream = contentResolver.openInputStream(uri)
             val reader = BufferedReader(InputStreamReader(inputStream))
             val json = reader.use { it.readText() }
@@ -111,4 +140,19 @@ class MainActivity : AppCompatActivity() {
         val totalSizeInMB = totalSize / (1024 * 1024)
         return Pair(totalItems, "$totalSizeInMB MB")
     }
+
+    // Function to get file extension from uri
+    private fun getFileExtension(uri: Uri): String? {
+        return contentResolver.getType(uri)?.let { mimeType ->
+            when (mimeType) {
+                "application/json" -> "json"
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> "xlsx"
+                else -> null
+            }
+        } ?: run {
+            // Fallback method to extract file extension from URI path if MIME type is unavailable
+            uri.lastPathSegment?.substringAfterLast('.', "")
+        }
+    }
+
 }
