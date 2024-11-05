@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="8dp"
+    android:background="?attr/selectableItemBackground">
+    
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    <TextView
+        android:id="@+id/typeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Type: "
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    
+        <TextView
+            android:id="@+id/nameTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Name"
+            app:layout_constraintTop_toBottomOf="@+id/typeTextView"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <TextView
+            android:id="@+id/pathTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Path:"
+            app:layout_constraintTop_toBottomOf="@id/nameTextView"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <TextView
+            android:id="@+id/footerViewTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Size:"
+            app:layout_constraintTop_toBottomOf="@id/pathTextView"
+            app:layout_constraintStart_toStartOf="parent"/>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
